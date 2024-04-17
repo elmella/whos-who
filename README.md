@@ -1,6 +1,4 @@
 
-
-
 # Speaker Diarization Techniques for NPR Podcast Data
 
 This repository contains implementations of speaker diarization techniques applied to NPR Podcast data. The techniques are implemented in two Jupyter Notebook files:
