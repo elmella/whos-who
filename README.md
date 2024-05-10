@@ -63,17 +63,17 @@ Finally, we implemented a Gaussian Mixture Model (GMM) on our UMAP-transformed d
 
 ### Initial Model: HMM
 
-With our podcasts now clustered by similarity, we tackled the task of speaker diarization on individual clusters. Initially, we modeled speaker-to-text assignment with a traditional HMM. The latent variable $$X_{i}$$ contained two states--"host is speaking" or "guest is speaking"--while the observation space $$Z_{i}$$ consisted of words in the English language. Examining the structure of a typical conversation, at each time step (i.e., each word), either Person A speaks again or Person B begins speaking. Both Person A and Person B will use different words with different probabilities. With this framework in mind, an HMM is a natural model to represent (1) the transition of speaking between persons as a hidden state, and (2) the speaking of words (emission) from individual speakers.
+With our podcasts now clustered by similarity, we tackled the task of speaker diarization on individual clusters. Initially, we modeled speaker-to-text assignment with a traditional HMM. The latent variable $X_{i}$ contained two states--"host is speaking" or "guest is speaking"--while the observation space $Z_{i}$ consisted of words in the English language. Examining the structure of a typical conversation, at each time step (i.e., each word), either Person A speaks again or Person B begins speaking. Both Person A and Person B will use different words with different probabilities. With this framework in mind, an HMM is a natural model to represent (1) the transition of speaking between persons as a hidden state, and (2) the speaking of words (emission) from individual speakers.
 
-However, modeling speaker diarization in this way violates the conditional independence assumption of HMMs. An HMM requires that the observation variable $$Z_{i}$$ is independent of the previous variable $$Z_{i-1}$$ when conditioned on state variable $$X_{i}$$. This assumption is clearly violated as adjacent words $$Z_{i}$$ and $$Z_{i-1}$$ in natural language are not independent.
+However, modeling speaker diarization in this way violates the conditional independence assumption of HMMs. An HMM requires that the observation variable $Z_{i}$ is independent of the previous variable $Z_{i-1}$ when conditioned on state variable $X_{i}$. This assumption is clearly violated as adjacent words $Z_{i}$ and $Z_{i-1}$ in natural language are not independent.
 
-We illustrate this with the following diagrams, borrowed from the Volume 3 textbook [Jarvis]. In Figure 2, we see how the observed word $$Z_{i}$$ is dependent on both $$X_{i}$$ and $$Z_{i-1}$$. If we wish to model this stochastic process as an HMM, we must ensure such a relationship is conditionally independent as shown in Figure 3.
+We illustrate this with the following diagrams, borrowed from the Volume 3 textbook [Jarvis]. In Figure 2, we see how the observed word $Z_{i}$ is dependent on both $X_{i}$ and $Z_{i-1}$. If we wish to model this stochastic process as an HMM, we must ensure such a relationship is conditionally independent as shown in Figure 3.
 
-**Figure 2: $$Z_{i} \not\!\perp\!\!\!\perp Z_{i-1} | X_{i-1}$$**
+**Figure 2: $Z_{i} \not\perp Z_{i-1} | X_{i-1}$**
 
 ![Unconditioned Markov](Unconditioned\ Markov.png)
 
-**Figure 3: $$Z_{i} \perp\!\!\!\perp Z_{i-1} | X_{i-1}, Z_{i-1}$$**
+**Figure 3: $Z_{i} \perp Z_{i-1} | X_{i-1}, Z_{i-1}$**
 
 ![Conditioned Markov](Conditioned\ Markov.png)
 
@@ -81,13 +81,13 @@ We illustrate this with the following diagrams, borrowed from the Volume 3 textb
 
 To overcome the violated independence assumption, we introduce our original Conditional Hidden Markov Model. The CHMM is described by:
 
-$$\textbf{x}_{i+1} = A_{z_{i-1}} \textbf{x}_i \qquad \textbf{z}_{i} = B_{z_{i-1}} \textbf{x}_i. \qquad$$
+$x_{i+1} = A_{z_{i-1}} x_i \qquad z_{i} = B_{z_{i-1}} x_i. \qquad$
 
-Entries of the transition matrix $$A_{z_{i-1}}$$ are $$[a]_{ij} = P(X_i | X_j, Z_{i-1})$$, and entries of the emission matrix $$B_{z_{i-1}}$$ are $$[b]_{ij} = P(Z_i | X_j, Z_{i-1})$$. In a traditional HMM, the probability of $$a_{ij}$$ does not vary with $$Z_{i-1}$$ via the independence assumption of $$P(Z_i | X_j) = P(Z_i | X_j, Z_{i-1})$$. However, with CHMM, $$a_{ij}$$ would vary depending on the previous observation. Thus, we condition on $$Z_{i-1}$$ by introducing a new transition and emission matrix for every possible state in the observation space.
+Entries of the transition matrix $A_{z_{i-1}}$ are $a_{ij} = P(X_i | X_j, Z_{i-1})$, and entries of the emission matrix $B_{z_{i-1}}$ are $b_{ij} = P(Z_i | X_j, Z_{i-1})$. In a traditional HMM, the probability of $a_{ij}$ does not vary with $Z_{i-1}$ via the independence assumption of $P(Z_i | X_j) = P(Z_i | X_j, Z_{i-1})$. However, with CHMM, $a_{ij}$ would vary depending on the previous observation. Thus, we condition on $Z_{i-1}$ by introducing a new transition and emission matrix for every possible state in the observation space.
 
-In the context of speaker diarization with a state space of two speakers and observation space of $$d$$ words, the $$2 \times 2$$ transition matrix between speaker states varies depending on its previous word $$Z_{i-1}$$. For example, the transition matrices associated with previous words "welcome" and "really" would vary. The word "welcome" exhibits large off-diagonal entries in the transition matrix $$A_{welcome}$$, indicating a high probability of state change, whereas "really" demonstrates prominent diagonal entries in $$A_{really}$$, reflecting a greater likelihood of state persistence. Thus, we collect all $$d$$ of our conditional transition matrices and construct a transition tensor $$A_k^{ij} = \begin{bmatrix} A_1 & A_2 & \cdots & A_d \end{bmatrix}$$ with a shape of $$(d,2,2)$$. The previous observation word $$Z_{i-1}$$ indexes each transition matrix and follows a similar process for our emission tensor $$B_k^{ij} = \begin{bmatrix} B_1 & B_2 & \cdots & B_d \end{bmatrix}$$ with a shape of $$(d,d,2)$$, as seen in Figure 4.
+In the context of speaker diarization with a state space of two speakers and observation space of $d$ words, the $2 \times 2$ transition matrix between speaker states varies depending on its previous word $Z_{i-1}$. For example, the transition matrices associated with previous words "welcome" and "really" would vary. The word "welcome" exhibits large off-diagonal entries in the transition matrix $A_{welcome}$, indicating a high probability of state change, whereas "really" demonstrates prominent diagonal entries in $A_{really}$, reflecting a greater likelihood of state persistence. Thus, we collect all $d$ of our conditional transition matrices and construct a transition tensor $A_k^{ij} = [A_1 A_2 ... A_d ]$ with a shape of $(d,2,2)$. The previous observation word $Z_{i-1}$ indexes each transition matrix and follows a similar process for our emission tensor $B_k^{ij} = [B_1 B_2 ... B_d ]$ with a shape of $(d,d,2)$, as seen in Figure 4.
 
-**Figure 4: A visual comparison between traditional HMM parameters and CHMM tensor parameters indexed by $$Z_{i-1}$$.**
+**Figure 4: A visual comparison between traditional HMM parameters and CHMM tensor parameters indexed by $Z_{i-1}$.**
 
 ![Comparison of HMM and CHMM parameters](HMM\ params.png)
 
@@ -95,11 +95,11 @@ In the context of speaker diarization with a state space of two speakers and obs
 
 In response to this estimation problem, we take advantage of the labeled examples from our training podcasts with all hidden states fully exposed. Hence, rather than fitting parameters with maximum likelihood via Baum-Welch for every new podcast, we can estimate these conditional probabilities directly from our other podcasts in our predefined training clusters.
 
-Our simple training procedure begins by initializing both emission and transition tensors with ones, following a Bayesian framework via Laplace add-one smoothing as presented in Volume 3, Section 4.7.3 [Jarvis]. Repeating for each training cluster, we then count the frequencies of all state transitions, conditioned on the preceding word, and increment the corresponding entries in the transition tensor. Once all text within a cluster has been accounted for, we normalize each individual matrix to be column-stochastic to find the conditional probabilities. We follow the same procedure corresponding to the probabilities found in our emission tensor. We note that the initial state $$\pi_0$$ (a $$2 \times 1$$ vector) is calculated similarly by taking frequencies of the host versus guest speaking first and normalizing.
+Our simple training procedure begins by initializing both emission and transition tensors with ones, following a Bayesian framework via Laplace add-one smoothing as presented in Volume 3, Section 4.7.3 [Jarvis]. Repeating for each training cluster, we then count the frequencies of all state transitions, conditioned on the preceding word, and increment the corresponding entries in the transition tensor. Once all text within a cluster has been accounted for, we normalize each individual matrix to be column-stochastic to find the conditional probabilities. We follow the same procedure corresponding to the probabilities found in our emission tensor. We note that the initial state $\pi_0$ (a $2 \times 1$ vector) is calculated similarly by taking frequencies of the host versus guest speaking first and normalizing.
 
 ### Prediction and Model Validity
 
-To make predictions under this new model, we modify the Viterbi algorithm for HMM to find the most probable sequence of hidden states for an entire episode. The Viterbi algorithm uses Bellman's principle to calculate the optimal path, using parameters from both transition and emission matrices at each time step. Our modified Viterbi algorithm follows the same procedure, only now (1) these matrix parameters are no longer temporally homogeneous, and (2) varying sets of parameters will be indexed according to the previous word $$Z_{i-1}$$ in our observation space. All other aspects of the algorithm remain the same, including the back-pointing procedure once the maximum $$\eta_{ij}$$ values have been identified.
+To make predictions under this new model, we modify the Viterbi algorithm for HMM to find the most probable sequence of hidden states for an entire episode. The Viterbi algorithm uses Bellman's principle to calculate the optimal path, using parameters from both transition and emission matrices at each time step. Our modified Viterbi algorithm follows the same procedure, only now (1) these matrix parameters are no longer temporally homogeneous, and (2) varying sets of parameters will be indexed according to the previous word $Z_{i-1}$ in our observation space. All other aspects of the algorithm remain the same, including the back-pointing procedure once the maximum $\eta_{ij}$ values have been identified.
 
 The CHMM and modified Viterbi algorithm preserve the assumption of conditional independence. However, there are many alternative ways to model this process. Our methodology entirely ignores punctuation, the length of utterances, and even differences in speaking styles between the host and guest within episodes. Additionally, our model considers speech on a word-by-word basis instead of utterance-by-utterance. Naturally, entire utterances will be spoken by the same individual. Thus, any disagreements within a single utterance predicted by our model present systematic error.
 
@@ -107,13 +107,13 @@ Despite these obvious shortcomings, a word-by-word analysis of just the text alo
 
 ## Results and Analysis
 
-Initially, we found that fitting the CHMM to our entire training set gave fairly disappointing results. In particular, the model predicted the speaker of each word in the training set with an average accuracy of 71%. In comparison to the 68% accuracy of the naive prediction, which predicts only one speaker for each episode, this is not much of an improvement. We note that for accuracy scores below 50%, we invert the predictions our model gives and calculate our accuracy as $$1 - accuracy$$. It appeared that assuming hosts will speak in a similar manner to each other is a false assumption as we gained little information training on the entire training set.
+Initially, we found that fitting the CHMM to our entire training set gave fairly disappointing results. In particular, the model predicted the speaker of each word in the training set with an average accuracy of 71%. In comparison to the 68% accuracy of the naive prediction, which predicts only one speaker for each episode, this is not much of an improvement. We note that for accuracy scores below 50%, we invert the predictions our model gives and calculate our accuracy as $1 - accuracy$. It appeared that assuming hosts will speak in a similar manner to each other is a false assumption as we gained little information training on the entire training set.
 
 Our next approach was to train a CHMM for each unique host. In doing so, we were able to track unique vocabulary choices by each individual host. We found that by training a separate set of parameters for each host, our accuracy improved to roughly 76%.
 
 After accidentally mixing our test and training data and seeing radically improved results of 88% accuracy, we determined that we needed more data than we had for a single host to generate our parameters. We quickly resolved our data leakage problem, and this led us to exploring our different methods of podcast clustering, either by host or embedded similarity.
 
-Clustering episodes into 8 different buckets gave an average of $$2212$$ episodes per cluster. After an 80-20 train-test split, our average train size for CHMM was $$1780$$ episodes. We then trained a separate CHMM for each bucket. We clustered the test data, then used the associated label to identify the corresponding CHMM parameters. Employing this technique only led to a slight increase in accuracy to 77.2%.
+Clustering episodes into 8 different buckets gave an average of $2212$ episodes per cluster. After an 80-20 train-test split, our average train size for CHMM was $1780$ episodes. We then trained a separate CHMM for each bucket. We clustered the test data, then used the associated label to identify the corresponding CHMM parameters. Employing this technique only led to a slight increase in accuracy to 77.2%.
 
 **Figure 5: Sample text from a random podcast as CHMM attempts to correctly assign speakers to text.**
 
@@ -125,9 +125,20 @@ These results suggest important implications. First, the failure of our CHMM to 
 
 **Figure 6: Comparison of the Confusion Matrices which attained 77.2% and 76.4% accuracy respectively.**
 
-| Cluster Confusion Matrix | Host Confusion Matrix |
-|--------------------------|-----------------------|
-| \(\begin{bmatrix} 0.68894 & 0.01399 \\ 0.22163 & 0.07543 \\ \end{bmatrix}\) | \(\begin{bmatrix} 0.68370 & 0.01582 \\ 0.22284 & 0.07764 \\ \end{bmatrix}\) |
+### Cluster Confusion Matrix
+
+|        |       0      |       1      |
+|--------|--------------|--------------|
+| **0**  | 0.68894      | 0.01399      |
+| **1**  | 0.22163      | 0.07543      |
+
+### Host Confusion Matrix
+
+|        |       0      |       1      |
+|--------|--------------|--------------|
+| **0**  | 0.68370      | 0.01582      |
+| **1**  | 0.22284      | 0.07764      |
+
 
 ## Ethical Considerations
 
