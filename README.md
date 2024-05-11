@@ -57,9 +57,11 @@ The second clustering method employed a 3-step process involving unsupervised le
 
 Finally, we implemented a Gaussian Mixture Model (GMM) on our UMAP-transformed data to perform the clustering. This GMM assumed 8 clusters, a natural division to group our 32 different hosts. When predicting the label for a new podcast, we simply embedded the podcast, transformed it with UMAP, then clustered the result based on our GMM. The corresponding pre-trained Markov model (described below in Training Procedure) was then used to make our prediction.
 
-**Figure 1: A 2-dimensional representation of UMAP transformation on embedded podcasts. The clear separation even in 2-dimensions explains the performance increase when using clustering.**
+<div align="center">
+    <img src="media/longboy.png" alt="UMAP transformation" width="60%"/>
+    <p><strong>Figure 1: A 2-dimensional representation of UMAP transformation on embedded podcasts.</strong></p>
+</div>
 
-![UMAP transformation](longboy.png)
 
 ### Initial Model: HMM
 
@@ -67,15 +69,17 @@ With our podcasts now clustered by similarity, we tackled the task of speaker di
 
 However, modeling speaker diarization in this way violates the conditional independence assumption of HMMs. An HMM requires that the observation variable $Z_{i}$ is independent of the previous variable $Z_{i-1}$ when conditioned on state variable $X_{i}$. This assumption is clearly violated as adjacent words $Z_{i}$ and $Z_{i-1}$ in natural language are not independent.
 
-We illustrate this with the following diagrams, borrowed from the Volume 3 textbook [Jarvis]. In Figure 2, we see how the observed word $Z_{i}$ is dependent on both $X_{i}$ and $Z_{i-1}$. If we wish to model this stochastic process as an HMM, we must ensure such a relationship is conditionally independent as shown in Figure 3.
+We illustrate this with the following diagrams, borrowed from the Volume 3 textbook [Jarvis]. In Figure 2, we see how the observed word $Z_{i}$ is dependent on both $X_{i}$ and $Z_{i-1}$. If we wish to model this stochastic process as an HMM, we must ensure such a relationship is conditionally independent as shown in Figure 2.
 
-**Figure 2: $Z_{i} \not\perp Z_{i-1} | X_{i-1}$**
+<div style="display:flex; justify-content:center; align-items:center;">
+<img src="media/Unconditioned-Markov.png" alt="Unconditioned Markov" width="45%" style="display:inline-block; margin:auto;"/>
+<img src="media/Conditioned-Markov.png" alt="Conditioned Markov" width="45%" style="display:inline-block; margin:auto;"/>
+</div>
 
-![Unconditioned Markov](Unconditioned\ Markov.png)
+**Figure 2: A demonstration of an Unconditioned HMM, with $Z_{i} \not\perp Z_{i-1} | X_{i-1}$ and a Conditioned HMM with $Z_{i} \perp Z_{i-1} | X_{i-1}, Z_{i-1}$**
 
-**Figure 3: $Z_{i} \perp Z_{i-1} | X_{i-1}, Z_{i-1}$**
 
-![Conditioned Markov](Conditioned\ Markov.png)
+
 
 ### Adjusted Model: CHMM
 
@@ -87,9 +91,12 @@ Entries of the transition matrix $A_{z_{i-1}}$ are $a_{ij} = P(X_i | X_j, Z_{i-1
 
 In the context of speaker diarization with a state space of two speakers and observation space of $d$ words, the $2 \times 2$ transition matrix between speaker states varies depending on its previous word $Z_{i-1}$. For example, the transition matrices associated with previous words "welcome" and "really" would vary. The word "welcome" exhibits large off-diagonal entries in the transition matrix $A_{welcome}$, indicating a high probability of state change, whereas "really" demonstrates prominent diagonal entries in $A_{really}$, reflecting a greater likelihood of state persistence. Thus, we collect all $d$ of our conditional transition matrices and construct a transition tensor $A_k^{ij} = [A_1 A_2 ... A_d ]$ with a shape of $(d,2,2)$. The previous observation word $Z_{i-1}$ indexes each transition matrix and follows a similar process for our emission tensor $B_k^{ij} = [B_1 B_2 ... B_d ]$ with a shape of $(d,d,2)$, as seen in Figure 4.
 
-**Figure 4: A visual comparison between traditional HMM parameters and CHMM tensor parameters indexed by $Z_{i-1}$.**
+<div style="display:flex; justify-content:center; align-items:center;">
+  <img src="media/HMM-params.png" alt="HMM Parameters" width="45%" style="margin-right:10px;"/>
+  <img src="media/CHMM-params.png" alt="CHMM Parameters" width="45%"/>
+</div>
 
-![Comparison of HMM and CHMM parameters](HMM\ params.png)
+**Figure 3: A visual comparison between traditional HMM parameters and CHMM tensor parameters indexed by $Z_{i-1}$.**
 
 ### Training Procedure
 
@@ -115,9 +122,10 @@ After accidentally mixing our test and training data and seeing radically improv
 
 Clustering episodes into 8 different buckets gave an average of $2212$ episodes per cluster. After an 80-20 train-test split, our average train size for CHMM was $1780$ episodes. We then trained a separate CHMM for each bucket. We clustered the test data, then used the associated label to identify the corresponding CHMM parameters. Employing this technique only led to a slight increase in accuracy to 77.2%.
 
-**Figure 5: Sample text from a random podcast as CHMM attempts to correctly assign speakers to text.**
-
-![Sample text from podcast](sample.png)
+<div align="center">
+<img src="media/sample.png" alt="Sample text from podcast" width="75%" style="display:block; margin:auto;"/>
+<p><strong>Figure 5: Sample text from a random podcast as CHMM attempts to correctly assign speakers to text.</strong></p>
+</div>
 
 Upon closer examination of our predicted labels, we found that each sequence of predicted labels is highly biased toward either the host or the guest, implying that we fail to capture many of the transitions. Figure 6 demonstrates how our rate of false negatives is quite large at 22%.
 
@@ -163,4 +171,30 @@ However, we cannot conclude from these results alone that our model generalizes 
 Future research should also investigate how modifications to our approach may result in greater accuracy. For example, while our methodology predicts the speaker word by word, future research could experiment with a model that classifies based on complete utterances. Specifically, such a model might predict the speaker of each word in an utterance and label the entire utterance with the most commonly predicted speaker. Furthermore, CHMM strictly focuses on text, disregarding parts of speech, punctuation, and even utterance length. We encourage future researchers to explore approaches for integrating these additional elements with CHMM. There is undoubtedly significant identifying information contained in these features, which our model is currently unable to capture.
 
 Nevertheless, the results of this study suggest that the CHMM can aid in solving interesting text-based speaker diarization problems moving forward, such as distinguishing between human authorship and generative artificial intelligence or even identifying authors of historical documents. More work should be done to develop and implement such computationally inexpensive text-based speaker diarization methods. These models are easier to train and simpler to understand, thus providing a valuable counterpart to the deep learning models currently used.
+
+
+## Bibliography
+
+**Park, T. J., Kanda, N., Dimitriadis, D., Han, K. J., Watanabe, S., & Narayanan, S. (2021).**  
+*A Review of Speaker Diarization: Recent Advances with Deep Learning.*  
+arXiv:2101.09624. Available at: [https://arxiv.org/abs/2101.09624](https://arxiv.org/abs/2101.09624)
+
+**Singh, S. (1999).**  
+*The Code Book: The Science of Secrecy from Ancient Egypt to Quantum Cryptography.*
+
+**Majumder, B. P., Li, S., Ni, J., & McAuley, J. (2020).**  
+*Interview: Large-scale Modeling of Media Dialog with Discourse Patterns and Knowledge Grounding.*  
+arXiv:2020.xxxxx. Available at: [https://arxiv.org/abs/2020.xxxxx](https://arxiv.org/abs/YOUR_LINK_HERE)
+
+**Jarvis, T. (2023).**  
+*Volume 3: Modeling with Dynamics and Control.*  
+Publisher: SIAM.
+
+**Fox, E. B., Sudderth, E. B., Jordan, M. I., & Willsky, A. S. (2011).**  
+*A sticky HDP-HMM with application to speaker diarization.*  
+The Annals of Applied Statistics, 5(2A), 1020-1055. DOI: [10.1214/10-AOAS395](http://dx.doi.org/10.1214/10-AOAS395)
+
+**Zhang, A., Wang, Q., Zhu, Z., Paisley, J., & Wang, C. (2019).**  
+*Fully Supervised Speaker Diarization.*  
+arXiv:1810.04719. Available at: [https://arxiv.org/abs/1810.04719](https://arxiv.org/abs/1810.04719)
 
