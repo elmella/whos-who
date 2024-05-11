@@ -135,17 +135,17 @@ These results suggest important implications. First, the failure of our CHMM to 
 
 ### Cluster Confusion Matrix
 
-|        |       0      |       1      |
+|        |       Predicted Guest      |       Predicted Host      |
 |--------|--------------|--------------|
-| **0**  | 0.68894      | 0.01399      |
-| **1**  | 0.22163      | 0.07543      |
+| **Actual Guest**  | 0.68894      | 0.01399      |
+| **Actual Host**  | 0.22163      | 0.07543      |
 
 ### Host Confusion Matrix
 
-|        |       0      |       1      |
+|        |       Predicted Guest      |       Predicted Host      |
 |--------|--------------|--------------|
-| **0**  | 0.68370      | 0.01582      |
-| **1**  | 0.22284      | 0.07764      |
+| **Actual Guest**  | 0.68370      | 0.01582      |
+| **Actual Host**  | 0.22284      | 0.07764      |
 
 
 ## Ethical Considerations
@@ -184,7 +184,6 @@ arXiv:2101.09624. Available at: [https://arxiv.org/abs/2101.09624](https://arxiv
 
 **Majumder, B. P., Li, S., Ni, J., & McAuley, J. (2020).**  
 *Interview: Large-scale Modeling of Media Dialog with Discourse Patterns and Knowledge Grounding.*  
-arXiv:2020.xxxxx. Available at: [https://arxiv.org/abs/2020.xxxxx](https://arxiv.org/abs/YOUR_LINK_HERE)
 
 **Jarvis, T. (2023).**  
 *Volume 3: Modeling with Dynamics and Control.*  
