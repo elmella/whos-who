@@ -120,7 +120,7 @@ Our next approach was to train a CHMM for each unique host. In doing so, we were
 
 After accidentally mixing our test and training data and seeing radically improved results of 88% accuracy, we determined that we needed more data than we had for a single host to generate our parameters. We quickly resolved our data leakage problem, and this led us to exploring our different methods of podcast clustering, either by host or embedded similarity.
 
-Clustering episodes into 8 different buckets gave an average of $2212$ episodes per cluster. After an 80-20 train-test split, our average train size for CHMM was $1780$ episodes. We then trained a separate CHMM for each bucket. We clustered the test data, then used the associated label to identify the corresponding CHMM parameters. Employing this technique only led to a slight increase in accuracy to 77.2%.
+Clustering episodes into 8 different buckets gave an average of 2212 episodes per cluster. After an 80-20 train-test split, our average train size for CHMM was 1780 episodes. We then trained a separate CHMM for each bucket. We clustered the test data, then used the associated label to identify the corresponding CHMM parameters. Employing this technique only led to a slight increase in accuracy to 77.2%.
 
 <div align="center">
 <img src="media/sample.png" alt="Sample text from podcast" width="75%" style="display:block; margin:auto;"/>
