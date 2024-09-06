@@ -1,4 +1,4 @@
-# New Phone, Who Dis?
+# Conditional Hidden Markov Model
 **A. de la Bruere, J. Gertsch, S. Layton, M. Mella, W. Stoddard**
 
 ## Abstract
